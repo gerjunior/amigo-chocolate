@@ -69,6 +69,42 @@ module.exports = {
 
             response.json({ success: true, message: "Grupo excluído com sucesso.", _id: _id })
         })
+    },
+
+    findMember(request, response) {
+        let {_id} = request.params
+
+        Grupo.aggregate([
+            {
+                "$project": {
+                    "pessoas": {
+                        "$filter": {
+                            "input": "$pessoas",
+                            "as": "item",
+                            "cond": {
+                                "$eq": ["$$item.info._id", { "$convert": { "input": `${_id}`, "to": "objectId" } }]
+                            }
+                        }
+                    },
+                    "admin": 1,
+                    "nome": 1,
+                    "valorMinimo": 1,
+                    "valorMaximo": 1,
+                    "dataSorteio": 1,
+                    "statusGrupo": 1
+                }
+            }
+        ], (err, res) => {
+            
+            if (err) {
+                return response.status(400).json({ success: false, _message: err.message, message: "Verifique as informações e tente novamente.", _id: _id })
+            }
+    
+            if (!res) {
+                return response.json({ success: false, message: "O usuário não está em nenhum grupo.", _id: _id })
+            }
+
+            return response.send(res)
+        })
     }
 }
-//GRUPO.FIND() onde tiver como membro o _id da Grupo
