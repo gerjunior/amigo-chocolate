@@ -5,6 +5,10 @@ module.exports = {
 
         Pessoa.find(request.body, (err, res) => {
 
+            if (!res || res.length === 0){
+                return response.status(404).json({ success: false, message: "Nenhuma informação encontrada."})
+            }
+
             return response.send(res)
         })
     },
@@ -47,7 +51,6 @@ module.exports = {
             else if (!res) {
                 return response.status(404).json({success: false, message: `Usuário não encontrado.`, _id: _id })
             }
-            console.log(res)
             return response.send(res)
         })
     },

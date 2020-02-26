@@ -1,36 +1,74 @@
 const Grupo = require('../models/Grupo')
 
 module.exports = {
-    async index(request, response){
-        const grupos = await Grupo.find()
+    index(request, response) {
 
-        return response.send(grupos)
+        Grupo.find(request.body, (err, res) => {
+
+            if (!res || res.length === 0){
+                return response.status(404).json({ success: false, message: "Nenhuma informação encontrada."})
+            }
+
+            return response.send(res)
+        })
     },
 
-    async getOne(request, response){
+    getOne(request, response) {
         let { _id } = request.params
-        const grupo = await Grupo.findById(_id)
+        Grupo.findById(_id, (err, res) => {
 
-        return response.send(grupo)
+            if (err || !res) {
+                return response.status(404).json({ success: false, message: "Grupo não encontrado.", _id: _id })
+            }
+
+            return response.json(res)
+        })
     },
 
-    async create(request, response){
-        const grupo = await Grupo.create(request.body)
+    create(request, response) {
 
-        return response.send(grupo)
+        Grupo.create(request.body, (err, res) => {
+            if (err) {
+                return response.status(400).json({ success: false, _message: err.message, message: "Erro de validação das informações presentes no corpo da requisição."})
+            }
+
+            return response.send(res)
+        })
     },
 
-    async edit(request, response){
-        const grupo = await Grupo.findByIdAndUpdate(request.body)
+    edit(request, response) {
 
-        return response.send(grupo)
+        let { _id } = request.body
+
+        if (!_id) {
+            return response.status(400).json({success: false, message: "_id do grupo não encontrado no corpo da requisição." })
+        }
+
+        Grupo.findByIdAndUpdate(_id, request.body, { new: true }, (err, res) => {
+            if (err) {
+                return response.status(400).json({ success: false, message: err.message, _id: _id })
+            }
+            else if (!res) {
+                return response.status(404).json({success: false, message: `O grupo não existe ou pode ter sido excluído.`, _id: _id })
+            }
+            return response.send(res)
+        })
     },
 
-    async delete(request, response){
+    delete(request, response) {
+
         let { _id } = request.params
-        const deleted = Grupo.deleteOne(_id)
+        Grupo.findByIdAndDelete(_id, (err, res) => {
+            if (err) {
+                return response.status(400).json({ success: false, _message: err.message, message: "Verifique as informações e tente novamente.", _id: _id })
+            }
 
-        return response.send(deleted)
+            if (!res) {
+                return response.json({ success: false, message: "Grupo não encontrado.", _id: _id })
+            }
+
+            response.json({ success: true, message: "Grupo excluído com sucesso.", _id: _id })
+        })
     }
 }
-//GRUPO.FIND() onde tiver como membro o _id da pessoa
+//GRUPO.FIND() onde tiver como membro o _id da Grupo

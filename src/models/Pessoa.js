@@ -4,7 +4,7 @@ const PessoaSchema = new mongoose.Schema({
     nome: {type: String, required: true},
     sobrenome: String,
     email: {type: String, required: true},
-    dataNascimento: String,
+    dataNascimento: Date,
     apelido: String,
     senha: String,
     descricao: String
