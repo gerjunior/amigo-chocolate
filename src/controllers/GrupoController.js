@@ -1,12 +1,24 @@
 const Grupo = require('../models/Grupo')
+const Pessoa = require('../models/Pessoa')
+const ObjectID = require('mongoose').Types.ObjectId
+const {
+    generic,
+    noInformation,
+    notFound,
+    validationError,
+    idNotFound } = require('../utils/error')
 
 module.exports = {
     index(request, response) {
 
         Grupo.find(request.body, (err, res) => {
 
-            if (!res || res.length === 0){
-                return response.status(404).json({ success: false, message: "Nenhuma informação encontrada."})
+            if (!res || res.length === 0) {
+                return response.status(404).json({ ...noInformation })
+            }
+
+            if (err) {
+                return response.status(500).json({ ...generic, _message: err.message })
             }
 
             return response.send(res)
@@ -15,21 +27,41 @@ module.exports = {
 
     getOne(request, response) {
         let { _id } = request.params
-        Grupo.findById(_id, (err, res) => {
 
+        Grupo.findById(_id, (err, res) => {
             if (err || !res) {
-                return response.status(404).json({ success: false, message: "Grupo não encontrado.", _id: _id })
+                return response.status(404).json({ ...notFound, _id: _id })
             }
 
             return response.json(res)
         })
     },
 
-    create(request, response) {
+    async create(request, response) {
+        let {admin, nome, valorMinimo, valorMaximo, dataSorteio } = request.body
 
-        Grupo.create(request.body, (err, res) => {
+        //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
+        let statusGrupo = 'A'
+
+        if (!admin || !admin._id){
+            return response.status(400).json({ ...idNotFound, admin: {_id: "ID"}})
+        }
+
+        if (!ObjectID.isValid(admin._id)){
+            return response.status(400).json({...validationError, _message: "admin _id inválido."})
+        }
+
+        admin = await Pessoa.findById(admin._id)
+
+        if (!admin){
+            return response.status(404).json({...notFound, _id: admin._id})
+        }
+
+        let grupo = {nome, admin, valorMinimo, valorMaximo, dataSorteio, statusGrupo}
+
+        Grupo.create(grupo, (err, res) => {
             if (err) {
-                return response.status(400).json({ success: false, _message: err.message, message: "Erro de validação das informações presentes no corpo da requisição."})
+                return response.status(400).json({ ...validationError, _message: err.message })
             }
 
             return response.send(res)
@@ -37,71 +69,50 @@ module.exports = {
     },
 
     edit(request, response) {
-
         let { _id } = request.body
 
         if (!_id) {
-            return response.status(400).json({success: false, message: "_id do grupo não encontrado no corpo da requisição." })
+            return response.status(400).json({ ...idNotFound })
         }
 
         Grupo.findByIdAndUpdate(_id, request.body, { new: true }, (err, res) => {
             if (err) {
-                return response.status(400).json({ success: false, message: err.message, _id: _id })
+                return response.status(400).json({ ...generic, _message: err.message })
             }
             else if (!res) {
-                return response.status(404).json({success: false, message: `O grupo não existe ou pode ter sido excluído.`, _id: _id })
+                return response.status(404).json({ ...notFound, _id: _id })
             }
+
             return response.send(res)
         })
     },
 
     delete(request, response) {
-
         let { _id } = request.params
+
         Grupo.findByIdAndDelete(_id, (err, res) => {
             if (err) {
-                return response.status(400).json({ success: false, _message: err.message, message: "Verifique as informações e tente novamente.", _id: _id })
+                return response.status(400).json({ ...invalidInformations, _message: err.message })
             }
 
             if (!res) {
-                return response.json({ success: false, message: "Grupo não encontrado.", _id: _id })
+                return response.status(404).json({ ...notFound, _id: _id })
             }
 
-            response.json({ success: true, message: "Grupo excluído com sucesso.", _id: _id })
+            response.send()
         })
     },
 
-    findMember(request, response) {
-        let {_id} = request.params
+    async addNewMember(request, response) {
+        //TODO: Verificar se já está presente no grupo.
+        //TODO: Adicionar uma lista de Grupos em PESSOA.
+        let {  _idGroup, _idMember, } = request.params
 
-        Grupo.aggregate([
-            {
-                "$project": {
-                    "pessoas": {
-                        "$filter": {
-                            "input": "$pessoas",
-                            "as": "item",
-                            "cond": {
-                                "$eq": ["$$item.info._id", { "$convert": { "input": `${_id}`, "to": "objectId" } }]
-                            }
-                        }
-                    },
-                    "admin": 1,
-                    "nome": 1,
-                    "valorMinimo": 1,
-                    "valorMaximo": 1,
-                    "dataSorteio": 1,
-                    "statusGrupo": 1
-                }
-            }
-        ], (err, res) => {
-            
-            if (err) {
-                return response.status(400).json({ success: false, _message: err.message, message: "Verifique as informações e tente novamente.", _id: _id })
-            }
-    
-            if (!res) {
-                return response.json({ success: false, message: "O usuário não está em nenhum grupo.", _id: _id })
+        const member = await Pessoa.findById(_idMember)
+
+        Grupo.findByIdAndUpdate(_idGroup, { "$push": { "integrantes": member } }, { new: true }, (err, res) => {
+            if (err){
+                return response.status(400).json({...generic, _message: err.message})
             }
 
             return response.send(res)

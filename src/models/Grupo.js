@@ -1,19 +1,35 @@
 const mongoose = require('mongoose')
-const { PessoaSchema } = require('./Pessoa')
 
 const GrupoSchema = new mongoose.Schema({
-    admin: PessoaSchema,
-    nome: String,
+    nome: {type: String, required: true},
     valorMinimo: Number,
     valorMaximo: Number,
-    dataSorteio: Date,
     statusGrupo: String,
-    pessoas: [{
-        info: PessoaSchema,
+    dataSorteio: Date,
+    admin: {
+        _id: {type: String, required: true},
+        nome: String,
+        apelido: String,
+        descricao: String,
+        dataNascimento: String,
+        email: String
+    },
+        integrantes: [{
+        _id: String,
+        nome: String,
+        apelido: String,
+        descricao: String,
+        dataNascimento: String,
+        email: String,
         desejos: [String],
         amigoChocolate: {
-            info: PessoaSchema,
-            desejos: [String],
+            _id: String,
+            nome: String,
+            apelido: String,
+            descricao: String,
+            dataNascimento: String,
+            email: String,
+            desejos: [String]
         }
     }]
 })

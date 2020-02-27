@@ -6,13 +6,24 @@ const PessoaSchema = new mongoose.Schema({
     email: {type: String, required: true},
     dataNascimento: Date,
     apelido: String,
-    senha: String,
-    descricao: String
+    senha: {type: String, required: true},
+    descricao: String,
+    amigos: [{
+        _id: String,
+        nome: String,
+        apelido: String,
+        descricao: String,
+        dataNascimento: String,
+        email: String
+    }],
+    grupos: [{
+        _id: String,
+        nome: String,
+        statusGrupo: String
+    }]
 })
 
-module.exports = {
-    Pessoa: mongoose.model('Pessoa', PessoaSchema),
-    PessoaSchema: PessoaSchema
-}
+module.exports = mongoose.model('Pessoa', PessoaSchema)
+
 
     
