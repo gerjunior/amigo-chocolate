@@ -86,7 +86,7 @@ module.exports = {
     delete(request, response) {
         let { Nick } = request.params
 
-        Pessoa.findOneAndDelete({ apelido: Nick }, (err, res) => {
+        Pessoa.findOneAndDelete({ apelido: Nick }, async (err, res) => {
             if (err) {
                 return response.status(400).json({
                     ...missingInformations,
@@ -98,6 +98,8 @@ module.exports = {
             if (!res) {
                 return response.status(404).json({})
             }
+
+            await Pessoa.updateMany({}, { "$pull": { "amigos": { "apelido": Nick } } })
 
             response.send()
         })
@@ -152,12 +154,5 @@ module.exports = {
 
         return response.send(MeUpdated)
 
-    },
-
-    adminDeleteAll(request, response) {
-
-        Pessoa.deleteMany({}, (err, res) => {
-            return response.send('Worked!')
-        })
     }
 }

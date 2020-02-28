@@ -1,7 +1,7 @@
 module.exports = {
     generic: {
         success: false,
-        message: "Erro interno.",
+        message: "Não sabemos o que aconteceu, mas houve um erro...",
         _message: "..."
     },
 
@@ -52,6 +52,16 @@ module.exports = {
     nickNotFound: {
         success: false,
         message: "Um apelido informado não foi encontrado."
+    },
+
+    notGroupMember: {
+        success: false,
+        message: "Não é um membro do grupo."
+    },
+
+    removeAdmin: {
+        success: false,
+        message: "Não é possível remover o administrador do grupo."
     }
 }
 

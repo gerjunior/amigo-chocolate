@@ -7,8 +7,9 @@ const {
     missingInformations,
     userNotFound,
     groupNotFound,
-    nickNotFound
-} = require('../utils/error')
+    nickNotFound,
+    notGroupMember,
+    removeAdmin } = require('../utils/error')
 
 module.exports = {
     index(request, response) {
@@ -56,11 +57,13 @@ module.exports = {
             return response.status(404).json({ ...nickNotFound, apelido: apelido })
         }
 
-        let grupo = { ...request.body, admin, integrantes: admin }
-        Grupo.create(grupo, (err, res) => {
+        let grupo = { ...request.body, admin, statusGrupo, integrantes: admin }
+        Grupo.create(grupo, async (err, res) => {
             if (err) {
                 return response.status(400).json({ ...validationError, _message: err.message })
             }
+
+            await Pessoa.findOneAndUpdate({apelido: apelido}, { "$push": { "grupos": res } })
 
             return response.send(res)
         })
@@ -88,7 +91,7 @@ module.exports = {
     delete(request, response) {
         let { _id } = request.params
 
-        Grupo.findByIdAndDelete(_id, (err, res) => {
+        Grupo.findByIdAndDelete(_id, async (err, res) => {
             if (err) {
                 return response.status(400).json({ ...missingInformations, _id: "ID", _message: err.message })
             }
@@ -97,12 +100,14 @@ module.exports = {
                 return response.status(404).json({})
             }
 
+            await Pessoa.updateMany({}, { "$pull": { "grupos": { "_id": _id} } })
+
             response.send()
         })
     },
 
     async addNewMember(request, response) {
-        let { _idGroup, Nick, } = request.params
+        let { _idGroup, Nick } = request.params
 
         const member = await Pessoa.findOne({ apelido: Nick })
 
@@ -123,7 +128,7 @@ module.exports = {
                     return response.status(404).json({ ...groupNotFound, _id: _idGroup })
                 }
 
-                await Pessoa.findByIdAndUpdate(member._id, { "$push": { "grupos": res } })
+                await Pessoa.findOneAndUpdate({apelido: Nick}, { "$push": { "grupos": res } })
 
                 return response.send(res)
             })
@@ -133,10 +138,35 @@ module.exports = {
         }
     },
 
-    adminDeleteAll(request, response) {
+    async removeMember(request, response) {
+        let { _idGroup, Nick } = request.params
 
-        Grupo.deleteMany({}, (err, res) => {
-            return response.send('Worked!')
+        const member = await Pessoa.findOne({ apelido: Nick })
+
+        if (!member) {
+            return response.status(404).json({ ...nickNotFound, Nick: Nick })
+        }
+
+        const Group = await Grupo.findOne({ _id: _idGroup, integrantes: { "$elemMatch": { "apelido": Nick } } })
+
+        if (!Group){
+            return response.status(404).json({ ...notGroupMember, Nick: Nick })
+        }
+
+        if (Group.admin.apelido === member.apelido){
+            return response.status(400).json({...removeAdmin})
+        }
+        
+
+        Grupo.findOneAndUpdate({_id: _idGroup}, {"$pull": {integrantes: {apelido: Nick}}}, { new: true }, async (err, res) => {
+
+            if (err){
+                return response.send(500).json({...generic, _message: err.message})
+            }
+            
+            await Pessoa.findOneAndUpdate({ apelido: Nick }, { "$pull": { "grupos": { "_id": _idGroup } } }, { new: true })
+
+            return response.send(res)
         })
     }
 }
