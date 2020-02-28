@@ -1,17 +1,17 @@
 const mongoose = require('mongoose')
 
 const PessoaSchema = new mongoose.Schema({
-    nome: {type: String, required: true},
+    nome: { type: String, required: true },
     sobrenome: String,
-    email: {type: String, required: true},
+    email: { type: String, required: true },
     dataNascimento: Date,
     apelido: String,
-    senha: {type: String, required: true},
+    senha: { type: String, required: true },
     descricao: String,
     amigos: [{
         _id: String,
         nome: String,
-        apelido: String,
+        apelido: { type: String, required: true, index: true, unique: true },
         descricao: String,
         dataNascimento: String,
         email: String
@@ -26,4 +26,3 @@ const PessoaSchema = new mongoose.Schema({
 module.exports = mongoose.model('Pessoa', PessoaSchema)
 
 
-    

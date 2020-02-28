@@ -11,7 +11,6 @@ const {
 
 //TODO: Criar o método removeFriend
 //TODO: Apagar da lista de amigos de todos em que ele estiver quando o usuário for apagado (método delete).
-
 module.exports = {
     index(request, response) {
 
@@ -50,6 +49,7 @@ module.exports = {
             if (err) {
                 return response.status(400).json({
                     ...validationError,
+                    message: `Já existe um usuário com o apelido ${request.body.apelido}`,
                     _message: err.message
                 })
             }
@@ -63,7 +63,7 @@ module.exports = {
         let { _id } = request.body
 
         if (!_id) {
-            return response.status(400).json({ ...idNotFound })
+            return response.status(404).json({ ...idNotFound })
         }
 
         Pessoa.findByIdAndUpdate(_id, request.body, { new: true }, (err, res) => {
@@ -86,8 +86,8 @@ module.exports = {
     },
 
     delete(request, response) {
-
         let { _id } = request.params
+
         Pessoa.findByIdAndDelete(_id, (err, res) => {
             if (err) {
                 return response.status(400).json({
@@ -108,7 +108,6 @@ module.exports = {
     },
 
     async addNewFriend(request, response) {
-        //TODO: Verificar se o amigo já está adicionado. Se já estiver, não adicionar.
 
         let { My_id, Friend_id } = request.params
 
@@ -147,8 +146,7 @@ module.exports = {
             return response.send(Updated)
         }
         else {
-            return response.status(404).json({ ...friendAlreadyAdded })
+            return response.status(400).json({ ...friendAlreadyAdded })
         }
-
     }
 }
