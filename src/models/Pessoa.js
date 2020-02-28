@@ -3,15 +3,15 @@ const mongoose = require('mongoose')
 const PessoaSchema = new mongoose.Schema({
     nome: { type: String, required: true },
     sobrenome: String,
-    email: { type: String, required: true },
+    email: { type: String, required: true, index: true, unique: true },
     dataNascimento: Date,
-    apelido: String,
+    apelido: { type: String, required: true, index: true, unique: true },
     senha: { type: String, required: true },
     descricao: String,
     amigos: [{
         _id: String,
         nome: String,
-        apelido: { type: String, required: true, index: true, unique: true },
+        apelido: String,
         descricao: String,
         dataNascimento: String,
         email: String

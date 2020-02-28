@@ -7,9 +7,9 @@ const GrupoSchema = new mongoose.Schema({
     statusGrupo: String,
     dataSorteio: Date,
     admin: {
-        _id: {type: String, required: true},
+        _id: String,
         nome: String,
-        apelido: String,
+        apelido: {type: String, required: true},
         descricao: String,
         dataNascimento: String,
         email: String

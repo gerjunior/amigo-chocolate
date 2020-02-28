@@ -1,27 +1,23 @@
 const Pessoa = require('../models/Pessoa')
 const {
     generic,
-    notFound,
-    noInformation,
     validationError,
-    idNotFound,
-    invalidInformations,
     addFriendError,
-    friendAlreadyAdded } = require('../utils/error')
+    alreadyFriend,
+    invalidNick,
+    nickNotFound,
+    missingInformations } = require('../utils/error')
 
-//TODO: Criar o método removeFriend
-//TODO: Apagar da lista de amigos de todos em que ele estiver quando o usuário for apagado (método delete).
 module.exports = {
     index(request, response) {
 
         Pessoa.find(request.body, (err, res) => {
 
-            if (!res || res.length === 0) {
-                return response.status(404).json({ ...noInformation })
-            }
-
             if (err) {
-                return response.status(500).json({ ...generic })
+                return response.status(500).json({ ...generic, _message: err.message })
+            }
+            else if (!res || res.length === 0) {
+                return response.status(404).json(res)
             }
 
             return response.send(res)
@@ -29,14 +25,11 @@ module.exports = {
     },
 
     getOne(request, response) {
-        let { _id } = request.params
-        Pessoa.findById(_id, (err, res) => {
+        let { Nick } = request.params
 
+        Pessoa.findOne({ apelido: Nick }, (err, res) => {
             if (err || !res) {
-                return response.status(404).json({
-                    ...notFound,
-                    _id: _id
-                })
+                return response.status(404).json({})
             }
 
             return response.json(res)
@@ -46,10 +39,15 @@ module.exports = {
     create(request, response) {
 
         Pessoa.create(request.body, (err, res) => {
-            if (err) {
+            if (err && err.name === "MongoError") {
+                return response.status(400).json({
+                    ...invalidNick,
+                    message: `Já existe um usuário com o apelido ${request.body.apelido}`,
+                })
+            }
+            else if (err && err.name === "ValidationError") {
                 return response.status(400).json({
                     ...validationError,
-                    message: `Já existe um usuário com o apelido ${request.body.apelido}`,
                     _message: err.message
                 })
             }
@@ -61,24 +59,24 @@ module.exports = {
     edit(request, response) {
 
         let { _id } = request.body
-
         if (!_id) {
-            return response.status(404).json({ ...idNotFound })
+            return response.status(400).json({ ...missingInformations, _id: "ID" })
         }
+
+        delete request.body._id
+        delete request.body.__v
+        delete request.body.amigos
+        delete request.body.grupos
 
         Pessoa.findByIdAndUpdate(_id, request.body, { new: true }, (err, res) => {
             if (err) {
                 return response.status(400).json({
                     ...generic,
-                    _message: err.message,
-                    _id: _id
+                    _message: err.message
                 })
             }
             else if (!res) {
-                return response.status(404).json({
-                    ...notFound,
-                    _id: _id
-                })
+                return response.status(404).json({})
             }
 
             return response.send(res)
@@ -86,21 +84,19 @@ module.exports = {
     },
 
     delete(request, response) {
-        let { _id } = request.params
+        let { Nick } = request.params
 
-        Pessoa.findByIdAndDelete(_id, (err, res) => {
+        Pessoa.findOneAndDelete({ apelido: Nick }, (err, res) => {
             if (err) {
                 return response.status(400).json({
-                    ...invalidInformations,
+                    ...missingInformations,
+                    apelido: "apelido",
                     _message: err.message
                 })
             }
 
             if (!res) {
-                return response.status(404).json({
-                    ...notFound,
-                    _id: _id
-                })
+                return response.status(404).json({})
             }
 
             response.send()
@@ -109,44 +105,59 @@ module.exports = {
 
     async addNewFriend(request, response) {
 
-        let { My_id, Friend_id } = request.params
+        let { MyNick, FriendNick } = request.params
 
-        const Me = await Pessoa.findById(My_id)
+        const Me = await Pessoa.findOne({ apelido: MyNick })
+        const Friend = await Pessoa.findOne({ apelido: FriendNick })
 
-        if (!Me) {
+        if (!Friend || !Me) {
             return response.status(404).json({
-                ...notFound,
-                _id: My_id
+                ...nickNotFound,
+                FriendNick: FriendNick,
+                MyNick: MyNick
             })
         }
 
-        const Friend = await Pessoa.findById(Friend_id)
-
-        if (!Friend) {
-            return response.status(404).json({
-                ...notFound,
-                _id: Friend_id
-            })
-        }
-
-        const isAlreadyFriend = await Pessoa.find({_id: My_id, amigos: { "$elemMatch": { "_id": Friend_id } } })
+        const isAlreadyFriend = await Pessoa.findOne({ apelido: MyNick, amigos: { "$elemMatch": { "apelido": FriendNick } } })
 
         if (!isAlreadyFriend || isAlreadyFriend.length === 0) {
-            const Updated = await Pessoa.findByIdAndUpdate(My_id, { "$push": { "amigos": Friend } }, { new: true })
+            const Updated = await Pessoa.findOneAndUpdate({ apelido: MyNick }, { "$push": { "amigos": Friend } }, { new: true })
+            const FriendUpdated = await Pessoa.findOneAndUpdate({ apelido: FriendNick }, { "$push": { "amigos": Me } }, { new: true })
 
-            if (!Updated) {
+            if (!Updated || !FriendUpdated) {
                 return response.status(400).json({
                     ...addFriendError,
-                    _message: err.message,
-                    My_id: My_id,
-                    Friend_id: Friend_id
+                    MyNick: MyNick,
+                    FriendNick: FriendNick
                 })
             }
 
             return response.send(Updated)
         }
+
         else {
-            return response.status(400).json({ ...friendAlreadyAdded })
+            return response.status(400).json({ ...alreadyFriend })
         }
+    },
+
+    async removeFriend(request, response) {
+        let { MyNick, FriendNick } = request.params
+
+        const MeUpdated = await Pessoa.findOneAndUpdate({ apelido: MyNick }, { "$pull": { "amigos": { "apelido": FriendNick } } }, { new: true })
+        const FriendUpdated = await Pessoa.findOneAndUpdate({ apelido: FriendNick }, { "$pull": { "amigos": { "apelido": MyNick } } }, { new: true })
+
+        if (!MeUpdated || !FriendUpdated) {
+            return response.status(404).json({ ...nickNotFound, MyNick: MyNick, FriendNick: FriendNick })
+        }
+
+        return response.send(MeUpdated)
+
+    },
+
+    adminDeleteAll(request, response) {
+
+        Pessoa.deleteMany({}, (err, res) => {
+            return response.send('Worked!')
+        })
     }
 }

@@ -12,7 +12,8 @@ app.use(routes)
 mongoose.connect(connectionString, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useFindAndModify: false
+    useFindAndModify: false,
+    useCreateIndex: true
 })
 
 app.listen(3333, () => {

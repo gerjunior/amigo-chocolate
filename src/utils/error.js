@@ -1,19 +1,13 @@
 module.exports = {
     generic: {
         success: false,
-        message: "Erro.",
+        message: "Erro interno.",
         _message: "..."
     },
 
-    noInformation: {
+    missingInformations: {
         success: false,
-        message: "Nenhuma informação encontrada."
-    },
-
-    notFound: {
-        success: false,
-        message: "Informação não encontrada.",
-        _id: "..."
+        message: "Alguma(s) informação(ões) necessária(s) não está(ão) presente(s) na requisição."
     },
 
     validationError: {
@@ -22,15 +16,9 @@ module.exports = {
         _message: "..."
     },
 
-    idNotFound: {
+    invalidNick: {
         success: false,
-        message: "_id não encontrado no corpo da requisição."
-    },
-
-    invalidInformations: {
-        success: false,
-        message: "Verifique as informações e tente novamente.",
-        _message: "..."
+        message: "O Nick informado já existe."
     },
 
     addFriendError: {
@@ -41,9 +29,29 @@ module.exports = {
         Friend_id: "..."
     },
 
-    friendAlreadyAdded: {
+    alreadyGroupMember: {
+        success: false,
+        message: "Já é um membro deste grupo."
+    },
+
+    alreadyFriend: {
         success: false,
         message: "Vocês já são amigos.",
+    },
+
+    groupNotFound: {
+        success: false,
+        message: "O grupo informado não foi encontrado."
+    },
+    
+    userNotFound: {
+        success: false,
+        message: "O usuário não foi encontrado."
+    },
+
+    nickNotFound: {
+        success: false,
+        message: "Um apelido informado não foi encontrado."
     }
 }
 
