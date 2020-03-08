@@ -6,6 +6,7 @@ const GrupoSchema = new mongoose.Schema({
     valorMaximo: Number,
     statusGrupo: String,
     dataSorteio: Date,
+    dataRevelacao: Date,
     admin: {
         _id: String,
         nome: String,

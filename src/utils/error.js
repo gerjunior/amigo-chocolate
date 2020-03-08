@@ -62,6 +62,11 @@ module.exports = {
     removeAdmin: {
         success: false,
         message: "Não é possível remover o administrador do grupo."
+    },
+
+    oddMembers: {
+        success: false,
+        message: "Não é possível realizar o sorteio pois o grupo contém um número ímpar de membros."
     }
 }
 

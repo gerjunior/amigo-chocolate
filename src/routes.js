@@ -12,6 +12,7 @@ routes.get('/grupo/:_id', GrupoController.getOne)
 routes.delete('/grupo/:_id', GrupoController.delete)
 routes.post('/grupo/add/:_idGroup/:Nick', GrupoController.addNewMember)
 routes.post('/grupo/remove/:_idGroup/:Nick', GrupoController.removeMember)
+routes.post('/grupo/draw/:_idGroup', GrupoController.draw)
 
 routes.get('/pessoa', PessoaController.index)
 routes.post('/pessoa', PessoaController.create)

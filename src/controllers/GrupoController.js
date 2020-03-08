@@ -1,5 +1,6 @@
 const Grupo = require('../models/Grupo')
 const Pessoa = require('../models/Pessoa')
+const mongoose = require('mongoose')
 const {
     generic,
     validationError,
@@ -9,7 +10,8 @@ const {
     groupNotFound,
     nickNotFound,
     notGroupMember,
-    removeAdmin } = require('../utils/error')
+    removeAdmin,
+    oddMembers } = require('../utils/error')
 
 module.exports = {
     index(request, response) {
@@ -45,12 +47,12 @@ module.exports = {
 
         //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
         let statusGrupo = 'A'
+        let apelido = admin.apelido
 
         if (!admin || !admin.apelido) {
             return response.status(400).json({ ...missingInformations, admin: { apelido: "apelido" } })
         }
 
-        let apelido = admin.apelido
         admin = await Pessoa.findOne({ apelido: admin.apelido })
 
         if (!admin) {
@@ -134,7 +136,7 @@ module.exports = {
             })
         }
         else {
-            return response.status(400).json({ ...alreadyGroupMember, _id: _idGroup })
+            return response.status(400).json({ ...alreadyGroupMember, _idGroup: _idGroup, nickMember: member.apelido })
         }
     },
 
@@ -168,5 +170,46 @@ module.exports = {
 
             return response.send(res)
         })
+    },
+
+    async draw(request, response) {
+
+        //ALTERAR O STATUS DO GRUPO
+        let {_idGroup} = request.params
+
+        const Group = await Grupo.aggregate([
+            {
+                "$match": {
+                    _id: mongoose.Types.ObjectId(_idGroup)
+                }
+            },
+            {
+                "$project": {
+                    statusGrupo: 1,
+                    nome: 1,
+                    "integrantes": 1
+                    // {
+                    //     "$map": {
+                    //         "input": "$integrantes",
+                    //         "as": "integrante",
+                    //         "in": "$$integrante.apelido"
+                    //     }
+                    // }
+                }
+            }
+        ])
+       
+        if (!Group || Group.length === 0) {
+            return response.status(404).json({...groupNotFound, _id: _idGroup})
+        }
+
+        let grupo = Group[0]
+
+        if (grupo.integrantes.length % 2 !== 0){
+            return response.status(400).json({...oddMembers})
+        }
+
+        return response.send(Group)
+
     }
 }
