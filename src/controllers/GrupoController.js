@@ -11,7 +11,9 @@ const {
     nickNotFound,
     notGroupMember,
     removeAdmin,
-    oddMembers } = require('../utils/error')
+    oddMembers,
+    alreadyDraw } = require('../utils/error')
+const draw = require('../utils/draw')
 
 module.exports = {
     index(request, response) {
@@ -65,7 +67,7 @@ module.exports = {
                 return response.status(400).json({ ...validationError, _message: err.message })
             }
 
-            await Pessoa.findOneAndUpdate({apelido: apelido}, { "$push": { "grupos": res } })
+            await Pessoa.findOneAndUpdate({ apelido: apelido }, { "$push": { "grupos": res } })
 
             return response.send(res)
         })
@@ -102,7 +104,7 @@ module.exports = {
                 return response.status(404).json({})
             }
 
-            await Pessoa.updateMany({}, { "$pull": { "grupos": { "_id": _id} } })
+            await Pessoa.updateMany({}, { "$pull": { "grupos": { "_id": _id } } })
 
             response.send()
         })
@@ -130,7 +132,7 @@ module.exports = {
                     return response.status(404).json({ ...groupNotFound, _id: _idGroup })
                 }
 
-                await Pessoa.findOneAndUpdate({apelido: Nick}, { "$push": { "grupos": res } })
+                await Pessoa.findOneAndUpdate({ apelido: Nick }, { "$push": { "grupos": res } })
 
                 return response.send(res)
             })
@@ -151,21 +153,21 @@ module.exports = {
 
         const Group = await Grupo.findOne({ _id: _idGroup, integrantes: { "$elemMatch": { "apelido": Nick } } })
 
-        if (!Group){
+        if (!Group) {
             return response.status(404).json({ ...notGroupMember, Nick: Nick })
         }
 
-        if (Group.admin.apelido === member.apelido){
-            return response.status(400).json({...removeAdmin})
+        if (Group.admin.apelido === member.apelido) {
+            return response.status(400).json({ ...removeAdmin })
         }
-        
 
-        Grupo.findOneAndUpdate({_id: _idGroup}, {"$pull": {integrantes: {apelido: Nick}}}, { new: true }, async (err, res) => {
 
-            if (err){
-                return response.send(500).json({...generic, _message: err.message})
+        Grupo.findOneAndUpdate({ _id: _idGroup }, { "$pull": { integrantes: { apelido: Nick } } }, { new: true }, async (err, res) => {
+
+            if (err) {
+                return response.send(500).json({ ...generic, _message: err.message })
             }
-            
+
             await Pessoa.findOneAndUpdate({ apelido: Nick }, { "$pull": { "grupos": { "_id": _idGroup } } }, { new: true })
 
             return response.send(res)
@@ -174,8 +176,7 @@ module.exports = {
 
     async draw(request, response) {
 
-        //ALTERAR O STATUS DO GRUPO
-        let {_idGroup} = request.params
+        let { _idGroup } = request.params
 
         const Group = await Grupo.aggregate([
             {
@@ -187,29 +188,55 @@ module.exports = {
                 "$project": {
                     statusGrupo: 1,
                     nome: 1,
-                    "integrantes": 1
-                    // {
-                    //     "$map": {
-                    //         "input": "$integrantes",
-                    //         "as": "integrante",
-                    //         "in": "$$integrante.apelido"
-                    //     }
-                    // }
+                    integrantes: 1,
+                    dataSorteio: 1
                 }
             }
         ])
-       
+
         if (!Group || Group.length === 0) {
-            return response.status(404).json({...groupNotFound, _id: _idGroup})
+            return response.status(404).json({ ...groupNotFound, _id: _idGroup })
         }
 
+        //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
+        if (Group.statusGrupo !== "A") {
+            return response.status(400).json({...alreadyDraw})
+        }
+
+        //aggregate retorna sempre uma lista
         let grupo = Group[0]
 
-        if (grupo.integrantes.length % 2 !== 0){
-            return response.status(400).json({...oddMembers})
+        if (grupo.integrantes.length % 2 !== 0) {
+            return response.status(400).json({ ...oddMembers })
         }
 
-        return response.send(Group)
+        const listaSorteio = draw(grupo.integrantes)
 
+        grupo.integrantes.forEach(integrante => {
+            let itemAmigoOculto = listaSorteio.find(item => item.apelido === integrante.apelido)
+            let objetoAmigoOculto = grupo.integrantes.find(user => user.apelido === itemAmigoOculto.amigoOculto)
+
+            integrante.amigoChocolate = {
+                _id: objetoAmigoOculto._id,
+                nome: objetoAmigoOculto.nome,
+                email: objetoAmigoOculto.email,
+                dataNascimento: objetoAmigoOculto.dataNascimento,
+                apelido: objetoAmigoOculto.apelido,
+                descricao: objetoAmigoOculto.descricao,
+                desejos: objetoAmigoOculto.desejos
+            }
+        });
+
+        grupo.statusGrupo = "S"
+        grupo.dataSorteio = new Date()
+
+        Grupo.findByIdAndUpdate(grupo._id, grupo, { new: true }, (err, res) => {
+
+            if (err) {
+                return response.status(400).json({ ...generic, _message: err.message })
+            }
+
+            return response.send(res)
+        })
     }
 }
