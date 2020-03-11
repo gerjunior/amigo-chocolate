@@ -1,4 +1,5 @@
 const { Router } = require('express')
+const auth = require('./middleware/auth')
 
 const GrupoController = require('./controllers/GrupoController')
 const PessoaController = require('./controllers/PessoaController')
