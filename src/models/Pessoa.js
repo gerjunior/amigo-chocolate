@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const mongoosePaginate = require('mongoose-paginate');
 
 const PessoaSchema = new mongoose.Schema({
     nome: { type: String, required: true },
@@ -22,6 +23,8 @@ const PessoaSchema = new mongoose.Schema({
         statusGrupo: String
     }]
 })
+
+PessoaSchema.plugin(mongoosePaginate)
 
 module.exports = mongoose.model('Pessoa', PessoaSchema)
 

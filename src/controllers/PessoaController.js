@@ -11,7 +11,9 @@ const {
 module.exports = {
     index(request, response) {
 
-        Pessoa.find(request.body, (err, res) => {
+        const { page = 1 } = request.query;
+
+        Pessoa.paginate(request.body, {page, limit : 2 }, (err, res) => {
 
             if (err) {
                 return response.status(500).json({ ...generic, _message: err.message })
