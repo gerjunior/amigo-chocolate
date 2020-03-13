@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const Pessoa = require('../models/Pessoa')
 const jwt = require('jsonwebtoken')
 

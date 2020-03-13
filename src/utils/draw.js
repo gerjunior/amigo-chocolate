@@ -9,15 +9,10 @@ const draw = (integrantes) => {
 
     for (let i = 0; i < integrantesEscolhidos.length; i++) {
 
-        if (!integrantesEscolhidos[i].amigoChocolate === null) {
-            continue
-        }
-
         while (!integrantesEscolhidos[i].amigoChocolate) {
             let amigoChocolate = integrantesEscolhidos[Math.floor(Math.random() * integrantesEscolhidos.length)]
 
-            if ((integrantesEscolhidos.length - 1 !== i) && //SE NÃO FOR O ÚLTIMO MEMBRO DA LISTA E
-                integrantesEscolhidos[i].apelido === amigoChocolate.apelido || //SE O AMIGO NÃO FOR EU MESMO OU
+            if (integrantesEscolhidos[i].apelido === amigoChocolate.apelido || //SE O AMIGO NÃO FOR EU MESMO OU
                 amigoChocolate.chosenByAnother) { //SE O AMIGO CHOCOLATE JÁ NÃO FOI ESCOLHIDO
                 continue
             }

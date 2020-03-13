@@ -200,13 +200,13 @@ module.exports = {
             return response.status(404).json({ ...groupNotFound, _id: _idGroup })
         }
 
-        //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
-        if (Group.statusGrupo !== "A") {
-            return response.status(400).json({...alreadyDraw})
-        }
-
         //aggregate retorna sempre uma lista
         let grupo = Group[0]
+        
+        //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
+        if (grupo.statusGrupo !== "A") {
+            return response.status(400).json({...alreadyDraw})
+        }
 
         if (grupo.integrantes.length % 2 !== 0) {
             return response.status(400).json({ ...oddMembers })
