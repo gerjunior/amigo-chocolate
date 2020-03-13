@@ -22,7 +22,7 @@ const auth = async (req, res, next) => {
         req.token = token
         next()
     } catch (error) {
-        res.status(401).send({ error: 'Você não está autorizado a acessar este recurso.' })
+        res.status(401).send({ error: 'Você não está autorizado a acessar este recurso ou o seu token expirou.' })
     }
 
 }

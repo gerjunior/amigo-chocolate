@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const mongoosePaginate = require('mongoose-paginate');
 
 const GrupoSchema = new mongoose.Schema({
     nome: {type: String, required: true},
@@ -34,5 +35,7 @@ const GrupoSchema = new mongoose.Schema({
         }
     }]
 })
+
+GrupoSchema.plugin(mongoosePaginate)
 
 module.exports = mongoose.model('Grupo', GrupoSchema)

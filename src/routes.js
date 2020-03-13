@@ -7,9 +7,9 @@ const LoginController = require('./controllers/LoginController')
 
 const routes = Router()
 
-routes.get('/token', LoginController.geraToken)
+routes.post('/token', LoginController.geraToken)
 
-routes.get('/grupo', GrupoController.index)
+routes.get('/grupo', auth, GrupoController.index)
 routes.post('/grupo', GrupoController.create)
 routes.put('/grupo', GrupoController.edit)
 routes.get('/grupo/:_id', GrupoController.getOne)

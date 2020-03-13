@@ -18,7 +18,9 @@ const draw = require('../utils/draw')
 module.exports = {
     index(request, response) {
 
-        Grupo.find(request.body, (err, res) => {
+        const { page = 1 } = request.query;
+
+        Grupo.paginate(request.body,{page, limit : 10 }, (err, res) => {
 
             if (!res || res.length === 0) {
                 return response.status(404).json(res)
