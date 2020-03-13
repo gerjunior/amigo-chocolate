@@ -11,7 +11,6 @@ const {
     nickNotFound,
     notGroupMember,
     removeAdmin,
-    oddMembers,
     alreadyDraw } = require('../utils/error')
     
 const draw = require('../utils/draw')
@@ -207,10 +206,6 @@ module.exports = {
         //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
         if (grupo.statusGrupo !== "A") {
             return response.status(400).json({...alreadyDraw})
-        }
-
-        if (grupo.integrantes.length % 2 !== 0) {
-            return response.status(400).json({ ...oddMembers })
         }
 
         const listaSorteio = draw(grupo.integrantes)
