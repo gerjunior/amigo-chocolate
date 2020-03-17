@@ -24,7 +24,7 @@ Onde:
 > Essas chaves são utilizadas pelo módulo env-cmd.
 
 ### Collection do Postman
-Para facilitar nas requisições, a *collection* do projeto no [postman](https://www.postman.com/downloads/](https://www.postman.com/downloads/)) está presente na pasta [readme_files](./readme_files). Importe ela antes de seguir para o próximo passo.
+Para facilitar nas requisições, a *collection* do projeto no [postman](https://www.postman.com/downloads/) está presente na pasta [readme_files](./readme_files). Importe ela antes de seguir para o próximo passo.
 
 
 ### Iniciando a API
