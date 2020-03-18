@@ -20,7 +20,7 @@ module.exports = {
 
         const { page = 1 } = request.query;
 
-        Grupo.paginate(request.body,{page, limit : 10 }, (err, res) => {
+        Grupo.paginate(request.body,{page, limit : 3 }, (err, res) => {
 
             if (!res || res.length === 0) {
                 return response.status(404).json(res)
