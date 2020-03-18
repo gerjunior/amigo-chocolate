@@ -15,6 +15,6 @@ mongoose.connect(process.env.connectionString, {
     useCreateIndex: true
 })
 
-app.listen(3333, () => {
+app.listen(process.env.PORT || 3000, () => {
     console.log('Aplicação rodando na porta 3333!')
 })
