@@ -1,5 +1,5 @@
 const Grupo = require('../models/Grupo');
-const Pessoa = require('../models/Pessoa');
+const Pessoa = require('../../pessoa/models/Pessoa');
 const mongoose = require('mongoose');
 const {
   generic,
@@ -12,9 +12,9 @@ const {
   notGroupMember,
   removeAdmin,
   alreadyDraw,
-} = require('../utils/error');
+} = require('../../../shared/utils/error');
 
-const draw = require('../utils/draw');
+const draw = require('../../../shared/utils/draw');
 
 module.exports = {
   index(request, response) {

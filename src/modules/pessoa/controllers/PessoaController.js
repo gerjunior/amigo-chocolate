@@ -7,7 +7,7 @@ const {
   invalidNick,
   nickNotFound,
   missingInformations,
-} = require('../utils/error');
+} = require('../../../shared/utils/error');
 
 module.exports = {
   index(request, response) {
