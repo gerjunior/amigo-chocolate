@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-const Pessoa = require('../../modules/pessoa/models/Pessoa');
 const jwt = require('jsonwebtoken');
+const Pessoa = require('../../modules/pessoa/models/Pessoa');
 
 const auth = async (req, res, next) => {
   try {

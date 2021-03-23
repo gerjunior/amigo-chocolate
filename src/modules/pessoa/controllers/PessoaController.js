@@ -16,7 +16,8 @@ module.exports = {
     Pessoa.paginate(request.body, { page, limit: 10 }, (err, res) => {
       if (err) {
         return response.status(500).json({ ...generic, _message: err.message });
-      } else if (!res || res.length === 0) {
+      }
+      if (!res || res.length === 0) {
         return response.status(404).json(res);
       }
 
@@ -25,7 +26,7 @@ module.exports = {
   },
 
   getOne(request, response) {
-    let { Nick } = request.params;
+    const { Nick } = request.params;
 
     Pessoa.findOne({ apelido: Nick }, (err, res) => {
       if (err || !res) {
@@ -43,7 +44,8 @@ module.exports = {
           ...invalidNick,
           message: `Já existe um usuário com o apelido ${request.body.apelido}`,
         });
-      } else if (err && err.name === 'ValidationError') {
+      }
+      if (err && err.name === 'ValidationError') {
         return response.status(400).json({
           ...validationError,
           _message: err.message,
@@ -55,7 +57,7 @@ module.exports = {
   },
 
   edit(request, response) {
-    let { _id } = request.body;
+    const { _id } = request.body;
     if (!_id) {
       return response.status(400).json({ ...missingInformations, _id: 'ID' });
     }
@@ -71,7 +73,8 @@ module.exports = {
           ...generic,
           _message: err.message,
         });
-      } else if (!res) {
+      }
+      if (!res) {
         return response.status(404).json({});
       }
 
@@ -80,7 +83,7 @@ module.exports = {
   },
 
   delete(request, response) {
-    let { Nick } = request.params;
+    const { Nick } = request.params;
 
     Pessoa.findOneAndDelete({ apelido: Nick }, async (err, res) => {
       if (err) {
@@ -102,7 +105,7 @@ module.exports = {
   },
 
   async addNewFriend(request, response) {
-    let { MyNick, FriendNick } = request.params;
+    const { MyNick, FriendNick } = request.params;
 
     const me = await Pessoa.findOne({ apelido: MyNick });
     const friend = await Pessoa.findOne({ apelido: FriendNick });
@@ -110,8 +113,8 @@ module.exports = {
     if (!friend || !me) {
       return response.status(404).json({
         ...nickNotFound,
-        FriendNick: FriendNick,
-        MyNick: MyNick,
+        FriendNick,
+        MyNick,
       });
     }
 
@@ -124,25 +127,24 @@ module.exports = {
       if (!Updated || !FriendUpdated) {
         return response.status(400).json({
           ...addFriendError,
-          MyNick: MyNick,
-          FriendNick: FriendNick,
+          MyNick,
+          FriendNick,
         });
       }
 
       return response.send(Updated);
-    } else {
-      return response.status(400).json({ ...alreadyFriend });
     }
+    return response.status(400).json({ ...alreadyFriend });
   },
 
   async removeFriend(request, response) {
-    let { MyNick, FriendNick } = request.params;
+    const { MyNick, FriendNick } = request.params;
 
     const MeUpdated = await Pessoa.findOneAndUpdate({ apelido: MyNick }, { $pull: { amigos: { apelido: FriendNick } } }, { new: true });
     const FriendUpdated = await Pessoa.findOneAndUpdate({ apelido: FriendNick }, { $pull: { amigos: { apelido: MyNick } } }, { new: true });
 
     if (!MeUpdated || !FriendUpdated) {
-      return response.status(404).json({ ...nickNotFound, MyNick: MyNick, FriendNick: FriendNick });
+      return response.status(404).json({ ...nickNotFound, MyNick, FriendNick });
     }
 
     return response.send(MeUpdated);

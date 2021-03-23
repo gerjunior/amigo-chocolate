@@ -1,6 +1,6 @@
+const mongoose = require('mongoose');
 const Grupo = require('../models/Grupo');
 const Pessoa = require('../../pessoa/models/Pessoa');
-const mongoose = require('mongoose');
 const {
   generic,
   validationError,
@@ -34,7 +34,7 @@ module.exports = {
   },
 
   getOne(request, response) {
-    let { _id } = request.params;
+    const { _id } = request.params;
 
     Grupo.findById(_id, (err, res) => {
       if (err || !res) {
@@ -48,9 +48,9 @@ module.exports = {
   async create(request, response) {
     let { admin } = request.body;
 
-    //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
-    let statusGrupo = 'A';
-    let apelido = admin.apelido;
+    // Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
+    const statusGrupo = 'A';
+    const { apelido } = admin;
 
     if (!admin || !admin.apelido) {
       return response.status(400).json({ ...missingInformations, admin: { apelido: 'apelido' } });
@@ -59,23 +59,28 @@ module.exports = {
     admin = await Pessoa.findOne({ apelido: admin.apelido });
 
     if (!admin) {
-      return response.status(404).json({ ...nickNotFound, apelido: apelido });
+      return response.status(404).json({ ...nickNotFound, apelido });
     }
 
-    let grupo = { ...request.body, admin, statusGrupo, integrantes: admin };
+    const grupo = {
+      ...request.body,
+      admin,
+      statusGrupo,
+      integrantes: admin,
+    };
     Grupo.create(grupo, async (err, res) => {
       if (err) {
         return response.status(400).json({ ...validationError, _message: err.message });
       }
 
-      await Pessoa.findOneAndUpdate({ apelido: apelido }, { $push: { grupos: res } });
+      await Pessoa.findOneAndUpdate({ apelido }, { $push: { grupos: res } });
 
       return response.send(res);
     });
   },
 
   edit(request, response) {
-    let { _id } = request.body;
+    const { _id } = request.body;
 
     if (!_id) {
       return response.status(400).json({ ...missingInformations, _id: 'ID' });
@@ -84,8 +89,9 @@ module.exports = {
     Grupo.findByIdAndUpdate(_id, request.body, { new: true }, (err, res) => {
       if (err) {
         return response.status(400).json({ ...generic, _message: err.message });
-      } else if (!res) {
-        return response.status(404).json({ ...userNotFound, _id: _id });
+      }
+      if (!res) {
+        return response.status(404).json({ ...userNotFound, _id });
       }
 
       return response.send(res);
@@ -93,7 +99,7 @@ module.exports = {
   },
 
   delete(request, response) {
-    let { _id } = request.params;
+    const { _id } = request.params;
 
     Grupo.findByIdAndDelete(_id, async (err, res) => {
       if (err) {
@@ -104,22 +110,25 @@ module.exports = {
         return response.status(404).json({});
       }
 
-      await Pessoa.updateMany({}, { $pull: { grupos: { _id: _id } } });
+      await Pessoa.updateMany({}, { $pull: { grupos: { _id } } });
 
       response.send();
     });
   },
 
   async addNewMember(request, response) {
-    let { _idGroup, Nick } = request.params;
+    const { _idGroup, Nick } = request.params;
 
     const member = await Pessoa.findOne({ apelido: Nick });
 
     if (!member) {
-      return response.status(404).json({ ...nickNotFound, Nick: Nick });
+      return response.status(404).json({ ...nickNotFound, Nick });
     }
 
-    const isAlreadyMember = await Grupo.findOne({ _id: _idGroup, integrantes: { $elemMatch: { apelido: Nick } } });
+    const isAlreadyMember = await Grupo.findOne({
+      _id: _idGroup,
+      integrantes: { $elemMatch: { apelido: Nick } },
+    });
 
     if (!isAlreadyMember || isAlreadyMember.length === 0) {
       Grupo.findByIdAndUpdate(_idGroup, { $push: { integrantes: member } }, { new: true }, async (err, res) => {
@@ -136,23 +145,26 @@ module.exports = {
         return response.send(res);
       });
     } else {
-      return response.status(400).json({ ...alreadyGroupMember, _idGroup: _idGroup, nickMember: member.apelido });
+      return response.status(400).json({ ...alreadyGroupMember, _idGroup, nickMember: member.apelido });
     }
   },
 
   async removeMember(request, response) {
-    let { _idGroup, Nick } = request.params;
+    const { _idGroup, Nick } = request.params;
 
     const member = await Pessoa.findOne({ apelido: Nick });
 
     if (!member) {
-      return response.status(404).json({ ...nickNotFound, Nick: Nick });
+      return response.status(404).json({ ...nickNotFound, Nick });
     }
 
-    const group = await Grupo.findOne({ _id: _idGroup, integrantes: { $elemMatch: { apelido: Nick } } });
+    const group = await Grupo.findOne({
+      _id: _idGroup,
+      integrantes: { $elemMatch: { apelido: Nick } },
+    });
 
     if (!group) {
-      return response.status(404).json({ ...notGroupMember, Nick: Nick });
+      return response.status(404).json({ ...notGroupMember, Nick });
     }
 
     if (group.admin.apelido === member.apelido) {
@@ -171,7 +183,7 @@ module.exports = {
   },
 
   async draw(request, response) {
-    let { _idGroup } = request.params;
+    const { _idGroup } = request.params;
 
     const group = await Grupo.aggregate([
       {
@@ -193,10 +205,10 @@ module.exports = {
       return response.status(404).json({ ...groupNotFound, _id: _idGroup });
     }
 
-    //aggregate retorna sempre uma lista
-    let grupo = group[0];
+    // aggregate retorna sempre uma lista
+    const grupo = group[0];
 
-    //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
+    // Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
     if (grupo.statusGrupo !== 'A') {
       return response.status(400).json({ ...alreadyDraw });
     }
@@ -204,8 +216,8 @@ module.exports = {
     const listaSorteio = draw(grupo.integrantes);
 
     grupo.integrantes.forEach((integrante) => {
-      let itemAmigoOculto = listaSorteio.find((item) => item.apelido === integrante.apelido);
-      let objetoAmigoOculto = grupo.integrantes.find((user) => user.apelido === itemAmigoOculto.amigoOculto);
+      const itemAmigoOculto = listaSorteio.find((item) => item.apelido === integrante.apelido);
+      const objetoAmigoOculto = grupo.integrantes.find((user) => user.apelido === itemAmigoOculto.amigoOculto);
 
       integrante.amigoChocolate = {
         _id: objetoAmigoOculto._id,
