@@ -14,7 +14,7 @@ const {
   alreadyDraw,
 } = require('../../../shared/utils/error');
 
-const draw = require('../../../shared/utils/draw');
+const draw = require('../services/draw');
 
 module.exports = {
   index(request, response) {
