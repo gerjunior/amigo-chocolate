@@ -149,13 +149,13 @@ module.exports = {
       return response.status(404).json({ ...nickNotFound, Nick: Nick });
     }
 
-    const Group = await Grupo.findOne({ _id: _idGroup, integrantes: { $elemMatch: { apelido: Nick } } });
+    const group = await Grupo.findOne({ _id: _idGroup, integrantes: { $elemMatch: { apelido: Nick } } });
 
-    if (!Group) {
+    if (!group) {
       return response.status(404).json({ ...notGroupMember, Nick: Nick });
     }
 
-    if (Group.admin.apelido === member.apelido) {
+    if (group.admin.apelido === member.apelido) {
       return response.status(400).json({ ...removeAdmin });
     }
 
@@ -173,7 +173,7 @@ module.exports = {
   async draw(request, response) {
     let { _idGroup } = request.params;
 
-    const Group = await Grupo.aggregate([
+    const group = await Grupo.aggregate([
       {
         $match: {
           _id: mongoose.Types.ObjectId(_idGroup),
@@ -189,12 +189,12 @@ module.exports = {
       },
     ]);
 
-    if (!Group || Group.length === 0) {
+    if (!group || group.length === 0) {
       return response.status(404).json({ ...groupNotFound, _id: _idGroup });
     }
 
     //aggregate retorna sempre uma lista
-    let grupo = Group[0];
+    let grupo = group[0];
 
     //Status do Grupo (A - Aguardando, S - Sorteado, F - Finalizado)
     if (grupo.statusGrupo !== 'A') {

@@ -104,10 +104,10 @@ module.exports = {
   async addNewFriend(request, response) {
     let { MyNick, FriendNick } = request.params;
 
-    const Me = await Pessoa.findOne({ apelido: MyNick });
-    const Friend = await Pessoa.findOne({ apelido: FriendNick });
+    const me = await Pessoa.findOne({ apelido: MyNick });
+    const friend = await Pessoa.findOne({ apelido: FriendNick });
 
-    if (!Friend || !Me) {
+    if (!friend || !me) {
       return response.status(404).json({
         ...nickNotFound,
         FriendNick: FriendNick,
@@ -118,8 +118,8 @@ module.exports = {
     const isAlreadyFriend = await Pessoa.findOne({ apelido: MyNick, amigos: { $elemMatch: { apelido: FriendNick } } });
 
     if (!isAlreadyFriend || isAlreadyFriend.length === 0) {
-      const Updated = await Pessoa.findOneAndUpdate({ apelido: MyNick }, { $push: { amigos: Friend } }, { new: true });
-      const FriendUpdated = await Pessoa.findOneAndUpdate({ apelido: FriendNick }, { $push: { amigos: Me } }, { new: true });
+      const Updated = await Pessoa.findOneAndUpdate({ apelido: MyNick }, { $push: { amigos: friend } }, { new: true });
+      const FriendUpdated = await Pessoa.findOneAndUpdate({ apelido: FriendNick }, { $push: { amigos: me } }, { new: true });
 
       if (!Updated || !FriendUpdated) {
         return response.status(400).json({
